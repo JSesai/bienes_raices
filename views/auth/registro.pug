@@ -1,0 +1,43 @@
+//- extends lo usamos para indicar que usaremos ese documento y nuestro contenido se rendizara en clock
+extends ../layout/index
+block contenido 
+    //- html que se renderiza en block, se inyecta en contenido recuerda que todo va identado eso indica que es hijo si esta por debajo de su nivel
+    
+    div.py-4
+    h1.text-4xl.my-10.font-extrabold.text-center Bienes 
+        span.font-normal Raices
+        //- toma datos dinamicos que vienen del controler
+        h2.text-center.text-2xl.font-extrabold=pagina
+        
+        //- si existen errores que son los que se mandan cuando se loguean se hara esta logica
+        if errores
+            div(class="max-w-md mx-auto my-10")
+                //- iteramos sobre el arreglo que recibimos de errores 
+                each error in errores 
+                    p(class="bg-red-600 uppercase text-xs text-center p-2 mb-1 font-bold")=error.msg
+                                
+
+        div.mt-7.mx-auto.max-w-md
+            div.bg-white.py-8.px-4.shadow.rounded-lg
+                //- la url de action es asi porque es la url viene desde el cliente, es decir cuando se visita esa ruta se hace con el metodo get(el navegador no lee otro metodo) y despues cuando ya tiene la vista el cliente al presionar el boton de submirt lo que hace ese boton es dispara el action pero como esta del lado del cliente esta solicitando esa url descrita en el action y ejecutando el metodo descrito que es post en este caso, entonces si revisas el router podraas ver que existe una ruta get y una post pero la post es la que procesara nuestra informacion enviada desde el formulario
+                form(method="POST" action="/auth/registro" novalidate).space-y-5
+                    //- input oculto es para poder tomar el vcalor del csrfToken que retorna el back con esta vista
+                    input(type="hidden" name="_csrf" value= csrfToken)
+                    div 
+                        label.block.text-sm.uppercase.text-gray-500.mb-1.font-bold(for="nombre") Tu nombre
+                        input#nombre.w-full.px-3.py-1.border.border-gray-300.rounded-sm.placeholder-gray-400(placeholder="Tu nombre" type="text" name="nombre" value= usuario ? usuario.nombre : '')
+                    div 
+                        label.block.text-sm.uppercase.text-gray-500.mb-1.font-bold(for="email") Email de Registro
+                        input#email.w-full.px-3.py-1.border.border-gray-300.rounded-sm.placeholder-gray-400(placeholder="Tu email" type="email" name="email" value=usuario ? usuario.email : '')
+                    div 
+                        label.block.text-sm.uppercase.text-gray-500.mb-1.font-bold(for="password") Password
+                        input#password.w-full.px-3.py-1.border.border-gray-300.rounded-sm.placeholder-gray-400(placeholder="Tu password" type="password" name="password")
+                    div 
+                        label.block.text-sm.uppercase.text-gray-500.mb-1.font-bold(for="repetir_password") Repetir Password
+                        input#repetir_password.w-full.px-3.py-1.border.border-gray-300.rounded-sm.placeholder-gray-400(placeholder="Repite tu Password" type="password" name="repetir_password")
+                    div(class="flex items-center justify-between")
+                        a(href="/auth/login" class="text-gray-500 text-xs") ¿Ya tienes cuenta? Inicia Sesión 
+                        a(href="/auth/olvide-password" class="text-gray-500 text-xs") Olvide mi password 
+
+                    //- tambien se puede usar la sintaxis de class para los estilos, metiendola en el parentesis y asi si se hace sugerencia de la extension de tailwind, escribelo asi
+                    input(class="cursor-pointer w-full bg-indigo-600 hover:bg-indigo-800 text-white font-bold py-2" type="submit" value="Crear Cuenta")

@@ -1,0 +1,12 @@
+//- indicamos que vamos a ocupar la plantilla y lo hacemos con extends 
+extends ../layout/index
+//- indicamos que el lugar donde se inyecta el codigo es en un block llamado contenido
+block contenido 
+    //- html que se renderiza en block, se inyecta en contenido recuerda que todo va identado eso indica que es hijo si esta por debajo de su nivel
+    div.py-4
+    h1.text-4xl.my-10.font-extrabold.text-center Bienes 
+        span.font-normal Raices
+        //- toma datos dinamicos que vienen del controler
+        h2.text-center.text-2xl.font-extrabold=pagina
+
+        p.text-xl.font-bold.text-center.my-10=mensaje
