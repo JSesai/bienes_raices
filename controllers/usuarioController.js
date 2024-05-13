@@ -2,16 +2,100 @@
 import { check, validationResult } from "express-validator" //libreria para poder ralizar validaciones
 import bcrypt from "bcrypt" //dependencia que sirve para encriptar y comparar datos hasheados (los datos hasheados por esta libreria no es pósible deshashearlos por lo que la unica forma que podemos cambiar el password es reescribiendolo)
 import Usuario from "../models/Usuario.js" //importamos el modelo es el que interactua con la bd
-import { generarId } from "../helpers/tokens.js"
+import { generarId, generarJWT } from "../helpers/tokens.js"
 import { emailRegistro, emailOlvidePassword } from "../helpers/emails.js"
+
+
 
 //controlador que llama a la vista del formulario login y lo devuelve para renderizar 
 const formularioLogin = (req, res) => {
     //render, indicamos la ruta del archivo que renderiza una plantilla (vista) ya no se especifica views porque fue definida al inicio cuandp se le indica que usaremos un motor de plantillas
     res.render('auth/login', {
         pagina: "Iniciar Sesión",
+        csrfToken: req.csrfToken(), //token para que se pueda validar el csrfToken de lo contrario marcara error
         autenticado: true
     })
+}
+
+//fn que valida la autenticacion (email y password) del usuario 
+const autenticarUser = async (req, res) => {
+    // console.log('autenticando');
+    const { email, password } = req.body //extraemos lo que llega en el body de la peticion 
+
+    //validamos que los campos cumplan con lo que requerimos
+    await check('email').isEmail().withMessage('El email no tiene un formato valido').run(req) //valida erl formato del email 
+    await check('password').notEmpty().withMessage('El password es obligatorio').run(req)  //valida longitud de contraseña sea minimo de 6
+
+    //esta funcion evalua el resultado de la validacion que acabamos de hacer en las lineas anteriores
+    let validationDataForm = validationResult(req) //guarda messagge con lo que hemos determinado en caso de que no se cumpla la validacion
+    // return res.json(validationDataForm.array())
+
+    //validamos si resultado contiene algo (no esta vacio) es porque hay errores
+    if (!validationDataForm.isEmpty()) {
+        return res.render('auth/login', {
+            pagina: "Error Inicio de Sesión",
+            csrfToken: req.csrfToken(), 
+            errores: validationDataForm.array(), //pasamos el erroor convertido en un array
+            usuario: {
+               email
+            }
+        })
+    }
+
+    //si llega a este punto ya paso la validacion por lo que ahora buscamos al usuario para poder comparar su password con la que tenemos en la BD
+
+    //buscamos usuario por conincidencia de email
+    const UserLoggin = await Usuario.findOne({where: {email}})
+
+    //validamos si no existe el usuario
+    if(!UserLoggin) {
+        return res.render('auth/login', {
+            pagina: 'Error Inicio de Sesión',
+            errores: [{ msg: 'El usuario no existe' }], //pasamos el erroor en un array y dentro un objeto por la estructura que espera la vista
+            csrfToken: req.csrfToken(),
+            usuario: {
+                email
+            }
+        })
+    }
+    //validamos si no esta confirmado el usuario
+    if(!UserLoggin.confirmado) {
+        return res.render('auth/login', {
+            pagina: 'Confirma tu Cuenta',
+            errores: [{ msg: 'Debes de confirmar tu cuenta desde tu email' }], //pasamos el erroor en un array y dentro un objeto por la estructura que espera la vista
+            csrfToken: req.csrfToken(),
+            usuario: {
+                email
+            }
+        })
+    }
+
+    //en este punto el usuario existe(tenemos la instancia que es el usuario encontrado) y la cuenta esta confirmada, comparamos las contraseñas
+    //validamos si no son iguales el password recibido con el almacenado en la BD que en este momento lo tenemos instanciado y podemos usar el metodo que hemos reqgistrado en el modelo
+    if (!UserLoggin.verificarPassword(password)){
+        return res.render('auth/login', {
+            pagina: 'Error Inicio de Sesión',
+            errores: [{ msg: 'El password es incorrecto' }], //pasamos el erroor en un array y dentro un objeto por la estructura que espera la vista
+            csrfToken: req.csrfToken(),
+            usuario: {
+                email
+            }
+        })
+    }
+
+    //autenticar al usuario,ya paso todas las validaciones. lo hacemos con JWT y pasando el id de la instancia del usuario
+    const token = generarJWT(UserLoggin.id)
+    console.log(token);
+    console.log('continua');
+    //almacenar el token en cookie
+    return res.cookie('_token', token, {
+        httpOnly: true,
+        // secure: true //segurodad para cifrado ssl
+    }).redirect('/mis-propiedades')
+
+    // return res.json({ msg: "hola" }) 
+    
+
 }
 
 //controlador que llama  a la vista de formulario de registrar usuario 
@@ -335,6 +419,7 @@ const nuevoPassword = async (req, res) => {
 
 export {
     formularioLogin,
+    autenticarUser,
     formularioRegistro,
     registrar,
     confirmar,

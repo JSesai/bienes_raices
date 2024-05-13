@@ -1,11 +1,12 @@
 //Archivo que maneja las rutas de usuario
 import express from 'express' //importamos express
-import { formularioLogin, formularioRegistro, formularioOlvidePassword, registrar, confirmar, resetPassword, comprobarToken, nuevoPassword } from '../controllers/usuarioController.js'
+import { formularioLogin, autenticarUser, formularioRegistro, formularioOlvidePassword, registrar, confirmar, resetPassword, comprobarToken, nuevoPassword } from '../controllers/usuarioController.js'
 
 
 const router = express.Router() // usamos el metodo router
 //definimos el routing es decir las rutas (endpoints) que son vervos http que esta separado poer tema de escalabilidad
-router.get('/login', formularioLogin) //end point de login y lo controla el controlador formularioLogin
+router.get('/login', formularioLogin) //end point de login y lo controla el controlador formularioLogin y solo renderiza la vista del formulario
+router.post('/login', autenticarUser) //end point de login y lo controla el controlador autenticarUser y valida los datos (email y pasword) que envia el usuario desde la vista del formulario
 
 //end point de registro 
 router.get('/registro', formularioRegistro)  //lo controla el controlador formularioRegistro login

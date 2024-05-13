@@ -40,4 +40,12 @@ const usuario = db.define('usuarios', {
     }
 })
 
+//todos los objetos en js tienen un protoype de esta manera sequelice nos permite registrar metodos perzonalizados
+//registramos metodo para comparar password
+usuario.prototype.verificarPassword = function(password){ //tiene que ser function declaration porque con arrow function no se puede usar this
+    //compara el password que recibe como parametro y lo compara con el password de la instancia de usuario
+    return bcrypt.compareSync(password, this.password) //retorna true si son iguales o false si no lo son
+
+}
+
 export default usuario
